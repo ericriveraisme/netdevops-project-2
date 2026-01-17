@@ -45,7 +45,8 @@ def poll_network():
             print(f"⚠️ {device.name} has no primary IP. Skipping.")
 
 if __name__ == "__main__":
+    poll_interval = int(os.getenv('POLL_INTERVAL', '30'))  # Default to 30 seconds
     while True:
         poll_network()
-        print("Waiting 30 seconds for next poll...")
-        time.sleep(30)
+        print(f"Waiting {poll_interval} seconds for next poll...")
+        time.sleep(poll_interval)
