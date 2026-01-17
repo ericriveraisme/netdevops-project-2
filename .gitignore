@@ -1,0 +1,14 @@
+# Local Environment Secrets
+.env
+
+# Python Virtual Environment
+venv/
+__pycache__/
+*.py[cod]
+
+# OS Specific Files
+.DS_Store
+thumbs.db
+
+# Docker Local Logs
+*.log

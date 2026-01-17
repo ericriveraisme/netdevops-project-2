@@ -1,0 +1,30 @@
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: project2-influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword123
+      - DOCKER_INFLUXDB_INIT_ORG=NetDevOps
+      - DOCKER_INFLUXDB_INIT_BUCKET=NetworkHealth
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: project2-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  influxdb_data:
+  grafana_data:
