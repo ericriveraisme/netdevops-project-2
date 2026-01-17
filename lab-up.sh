@@ -28,6 +28,8 @@ sleep 10  # Allow InfluxDB/Grafana to initialize
 
 # 3. Start the ICMP Poller (System Service)
 echo "--- Starting Python Poller Service ---"
+# Reload systemd daemon to ensure fresh service config (prevents "changed on disk" warnings)
+sudo systemctl daemon-reload
 # FUTURE: Verify InfluxDB health before starting to prevent early connection errors
 sudo systemctl start net-poller.service
 echo "✅ Poller Started."
