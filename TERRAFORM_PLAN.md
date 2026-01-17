@@ -672,6 +672,51 @@ resource "docker_container" "influxdb" {
 
 ---
 
+## 13a. Sprint Plan (time‑boxed)
+
+Small sprints so you don’t work all night. Each sprint is ~30–90 minutes and builds on the previous one.
+
+Sprint 0 — Setup (30–45 min)
+- Create `terraform/` folders from the plan.
+- Add `provider.tf`, minimal `main.tf`, and `.tfvars.example` with placeholders (gitignored real `.tfvars`).
+- Run: `terraform init && terraform validate`.
+- Decide state: local for dev; note S3+DynamoDB for team use (Section 3).
+
+Sprint 1 — Monitoring module (InfluxDB + Grafana) (60–90 min)
+- Implement `modules/monitoring` (images pinned, volumes, network, healthchecks).
+- Inputs from `.tfvars`: `grafana_admin_password`, `influx_token`.
+- Outputs: Grafana URL, network ID.
+- `terraform plan -var-file=dev.tfvars` → `terraform apply`.
+- Verify: `docker ps`, `curl :8086/health`, `curl :3000/api/health`.
+
+Sprint 2 — NetBox module (45–60 min)
+- Implement `modules/netbox` (image pin, volume, env, healthcheck).
+- Output: NetBox URL.
+- Apply and verify UI loads.
+
+Sprint 3 — Poller module (45–60 min)
+- Implement `modules/poller` using `local_file` (or `bpg/systemd` provider) to render `/etc/systemd/system/net-poller.service`.
+- Provisioner: `systemctl daemon-reload && systemctl restart net-poller`.
+- Verify: `systemctl status net-poller` and one-shot write `./venv/bin/python health_poller.py --once`.
+
+Sprint 4 — Secrets & State hardening (30–45 min)
+- Mark sensitive vars; ensure `.tfvars` is gitignored.
+- Optional: migrate to S3 backend with locking (Section 2/3).
+- Document token rotation and state backup.
+
+Sprint 5 — Ansible starter for NetDevOps (Juniper) (45–60 min)
+- Add `ansible.cfg` + NetBox inventory plugin and a simple playbook:
+  - Pull devices from NetBox.
+  - Ping or `facts` collection against lab Juniper devices (mock or a couple of real ones).
+- Demo “inventory from NetBox” → “reachability”.
+
+Sprint 6 — Polish (30–45 min)
+- `terraform fmt -recursive`, `terraform validate`.
+- Add `pre-commit` hooks (fmt/validate).
+- Optional CI: GitHub Actions `terraform plan` on PR.
+
+---
+
 ## 14. Portfolio Talking Points
 
 **For Interviewers:**
@@ -697,6 +742,27 @@ resource "docker_container" "influxdb" {
 - [ ] Tested `terraform plan` output for safety
 - [ ] Tested `terraform apply` on clean VM/Docker host
 - [ ] Container healthchecks included for all services
+
+---
+
+## 16. Ansible + NetBox Device Modeling Guidance (Juniper)
+
+Should you model many devices now?
+- Recommendation: start small and realistic, then scale.
+- Begin with 6–10 devices across 2 sites, with roles that mimic your NOC:
+  - core (EX/QFX), dist (EX), edge router (SRX), and a couple of access devices.
+- Model in NetBox:
+  - Sites, device roles, device types (Juniper SKUs), management interfaces, `primary_ip4`, and tags (e.g., `site=main-office`).
+
+Benefits for Ansible:
+- Use NetBox as inventory via `netbox.netbox.nb_inventory`.
+- Juniper playbooks via `junipernetworks.junos` collection (facts, config pushes).
+- Scale later to 20–50 devices once workflows are proven.
+
+References:
+- NetBox Inventory Plugin: https://docs.ansible.com/ansible/latest/collections/netbox/netbox/nb_inventory_inventory.html
+- Juniper Ansible Collection: https://galaxy.ansible.com/junipernetworks/junos
+- Ansible Network Guide: https://docs.ansible.com/ansible/latest/network/getting_started/index.html
 
 ---
 
