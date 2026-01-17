@@ -1,19 +1,21 @@
-# 📊 Project 2: Automated Network Observability Stack
-**Author:** Eric R. Rivera
-**Status:** PRODUCTION READY ✅
+# 📊 Project 2: Automated Network Observability
+**Lead Architect:** Eric R. Rivera
+**Status:** COMPLETE ✅
 
-## 🏗️ Architecture
-This project implements an automated "closed-loop" monitoring system. The Python engine dynamically discovers inventory from NetBox and streams real-time telemetry to a time-series database.
+## 🏗️ Architecture Overview
+This project demonstrates a "closed-loop" automation system where the inventory (NetBox) dynamically drives the monitoring configuration.
 
+### 🛠️ Key Components & Fundamentals
+1. **Source of Truth (NetBox):** Used as the authoritative database for all network assets. 
+   - *Concept:* Primary IP mapping ensuring management traffic is isolated from data traffic.
+2. **Time-Series Historian (InfluxDB 2.7):** Optimized for high-velocity latency metrics.
+   - *Concept:* Tags (Indexed metadata for filtering) vs. Fields (Raw numerical measurements).
+3. **The Engine (Python Poller):**
+   - *Automation:* Uses `pynetbox` for dynamic device discovery.
+   - *Idempotency:* `bulk_provision.py` ensures infrastructure state matches the desired configuration without creating duplicates.
+4. **Visualization (Grafana):** A single pane of glass for real-time latency and availability.
 
-
-### 🛠️ Core Components
-* **Source of Truth:** NetBox (Dockerized) provides the list of active devices and management IPs.
-* **Telemetry Store:** InfluxDB 2.7 stores high-resolution ICMP latency data.
-* **Visualization:** Grafana Dashboards provide real-time NOC-style visibility.
-* **Automation Engine:** A Python `systemd` service that handles non-privileged ICMP polling.
-
-### 🚀 Management Commands
-* **Check System Health:** `check-stack` (Custom alias for `verify_stack.py`)
-* **Bulk Provision:** `python3 bulk_provision.py` (Idempotent device onboarding).
-* **Restart Services:** `sudo systemctl restart net-poller`
+### 🚀 Key Technical Wins
+- **Linux Kernel Tuning:** Configured `net.ipv4.ping_group_range` for non-privileged ICMP execution.
+- **REST API Integration:** Implemented CRUD operations with schema validation and error handling.
+- **Secret Management:** Utilized `.env` and `.gitignore` to protect API tokens.
