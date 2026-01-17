@@ -68,7 +68,15 @@ git clone <repository-url>
 cd netdevops-project2
 ```
 
-2. **Configure credentials (IMPORTANT)**
+2. **Create/activate venv and install deps**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt        # runtime
+pip install -r requirements-dev.txt    # dev/test (optional, includes pytest/ruff/black/mypy)
+```
+
+3. **Configure credentials (IMPORTANT)**
 ```bash
 cp .env.example .env
 # Edit .env with your actual credentials:
@@ -77,26 +85,35 @@ cp .env.example .env
 nano .env
 ```
 
-3. **Start the monitoring stack**
+4. **Start the monitoring stack**
 ```bash
 docker compose up -d
 ```
 
-4. **Verify deployment**
+5. **Verify deployment**
 ```bash
-python3 verify_stack.py
+./venv/bin/python verify_stack.py
 ```
 
-5. **Run the health poller**
+6. **Run the health poller**
 ```bash
-python3 health_poller.py
+./venv/bin/python health_poller.py          # continuous
+./venv/bin/python health_poller.py --once   # single cycle
 ```
 
 ### Management Commands
-* **Check System Health:** `python3 verify_stack.py`
-* **Bulk Provision Devices:** `python3 bulk_provision.py` (Idempotent)
-* **Discover NetBox Inventory:** `python3 get_slugs.py`
+* **Check System Health:** `./venv/bin/python verify_stack.py`
+* **Bulk Provision Devices:** `./venv/bin/python bulk_provision.py` (Idempotent)
+* **Discover NetBox Inventory:** `./venv/bin/python get_slugs.py`
+* **Run tests:** `./venv/bin/python -m pytest -q`
 * **Graceful Shutdown:** `./shutdown_lab.sh`
+
+### Close-out Checklist (daily wrap-up)
+* `docker compose ps` → both influxdb and grafana Up/healthy.
+* `systemctl status net-poller` → running (if using service); or `./venv/bin/python health_poller.py --once` to validate writes.
+* `./venv/bin/python -m pytest -q` → quick smoke of point shape.
+* `git status -sb` → ensure `.env` and other secrets are untracked; no unexpected files staged.
+* Avoid `docker compose down -v` if you want to retain Grafana/Influx data.
 
 ## 🛠️ Technologies Used
 

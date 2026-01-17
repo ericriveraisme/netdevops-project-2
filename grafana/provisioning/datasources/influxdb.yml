@@ -1,0 +1,20 @@
+apiVersion: 1
+
+# Provision InfluxDB v2 datasource using env variables
+# Env vars are passed via docker-compose grafana.environment
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    editable: false
+    isDefault: true
+    url: ${INFLUX_URL}
+    jsonData:
+      version: Flux        # Use Flux for InfluxDB v2
+      organization: ${INFLUX_ORG}
+      defaultBucket: ${INFLUX_BUCKET}
+      httpMode: flux       # Force Flux (not InfluxQL)
+      tlsSkipVerify: false
+    secureJsonData:
+      token: ${INFLUX_TOKEN}

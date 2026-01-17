@@ -1,46 +1,50 @@
+import logging
 import os
-from dotenv import load_dotenv
+from typing import Dict, List
+
 import pynetbox
+from dotenv import load_dotenv
 
 load_dotenv()
-nb = pynetbox.api(url=os.getenv('NETBOX_URL'), token=os.getenv('NETBOX_TOKEN'))
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+nb = pynetbox.api(url=os.getenv("NETBOX_URL"), token=os.getenv("NETBOX_TOKEN"))
 
 # UPDATED: These now match your get_slugs.py output exactly
-new_devices = [
+new_devices: List[Dict[str, str]] = [
     {
-        'name': 'EDGE-ROUTER-02', 
-        'role': 'edge-router', 
-        'model': 'generic-switch', # Using the slug we know exists
-        'site': 'main-office', 
-        'ip': '100.89.136.2/32'
+        "name": "EDGE-ROUTER-02",
+        "role": "edge-router",
+        "model": "generic-switch",
+        "site": "main-office",
+        "ip": "100.89.136.2/32",
     },
     {
-        'name': 'DIST-SW-03', 
-        'role': 'distribution-switch', 
-        'model': 'generic-switch', 
-        'site': 'remote-branch', 
-        'ip': '100.89.136.3/32'
-    }
+        "name": "DIST-SW-03",
+        "role": "distribution-switch",
+        "model": "generic-switch",
+        "site": "remote-branch",
+        "ip": "100.89.136.3/32",
+    },
 ]
 
-def provision_device_idempotent(data):
+def provision_device_idempotent(data: Dict[str, str]) -> None:
     # 1. VALIDATION: Check if slugs exist
-    role = nb.dcim.device_roles.get(slug=data['role'])
-    d_type = nb.dcim.device_types.get(slug=data['model'])
-    site = nb.dcim.sites.get(slug=data['site'])
+    role = nb.dcim.device_roles.get(slug=data["role"])
+    d_type = nb.dcim.device_types.get(slug=data["model"])
+    site = nb.dcim.sites.get(slug=data["site"])
 
     if not all([role, d_type, site]):
-        missing = [k for k, v in {'role': role, 'model': d_type, 'site': site}.items() if not v]
+        missing = [k for k, v in {"role": role, "model": d_type, "site": site}.items() if not v]
         raise ValueError(f"Missing slugs in NetBox: {missing}")
 
     # 2. IDEMPOTENCY: Check if device exists
-    device = nb.dcim.devices.get(name=data['name'])
+    device = nb.dcim.devices.get(name=data["name"])
     if device:
-        print(f"ℹ️ {data['name']} already exists. Skipping creation.")
+        logging.info("%s already exists. Skipping creation.", data["name"])
     else:
-        print(f"🚀 Creating {data['name']}...")
+        logging.info("Creating %s...", data["name"])
         device = nb.dcim.devices.create(
-            name=data['name'],
+            name=data["name"],
             device_type=d_type.id,
             role=role.id,
             site=site.id,
@@ -57,10 +61,10 @@ def provision_device_idempotent(data):
         )
 
     # 4. IP ADDRESS: Ensure IP exists and is linked
-    ip_addr = nb.ipam.ip_addresses.get(address=data['ip'])
+    ip_addr = nb.ipam.ip_addresses.get(address=data["ip"])
     if not ip_addr:
         ip_addr = nb.ipam.ip_addresses.create(
-            address=data['ip'],
+            address=data["ip"],
             assigned_object_type='dcim.interface',
             assigned_object_id=interface.id,
             status='active'
@@ -69,13 +73,13 @@ def provision_device_idempotent(data):
     # 5. SET PRIMARY: Ensure the pointer is correct
     if not device.primary_ip4 or device.primary_ip4.id != ip_addr.id:
         device.update({'primary_ip4': ip_addr.id})
-        print(f"✅ {data['name']} is now live and set as primary.")
+        logging.info("%s is now live and set as primary.", data["name"])
     else:
-        print(f"✅ {data['name']} configuration is already correct.")
+        logging.info("%s configuration is already correct.", data["name"])
 
 if __name__ == "__main__":
     for entry in new_devices:
         try:
             provision_device_idempotent(entry)
         except Exception as e:
-            print(f"❌ Error provisioning {entry['name']}: {e}")
+            logging.error("Error provisioning %s: %s", entry['name'], e)

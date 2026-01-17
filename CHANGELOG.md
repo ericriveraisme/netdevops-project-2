@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-01-17
 
+## [1.2.0] - 2026-01-17
+
+### Added
+- Requirements pinning (`requirements.txt`, `requirements-dev.txt`) and dev tools (pytest/ruff/black/mypy).
+- Healthcheck and pinned image versions for InfluxDB and Grafana in `docker-compose.yml`.
+- `ARCHITECTURE.md` to explain data flow and demo tips.
+- Grafana dashboard enhancements for non-technical viewers (up/down counters, clearer titles/descriptions).
+
+### Changed
+- `health_poller.py` hardened: logging, env validation, NetBox timeouts, jittered intervals, graceful SIGINT/SIGTERM, safer ping handling.
+- Provisioning helpers now log structured messages and reuse existing interfaces/IPs.
+- README updated with venv-based setup, test command, and close-out checklist.
+
+### Tests
+- Added `tests/test_health_poller.py` point-shape smoke test; pytest passing in venv.
+
 ### Security
 - **CRITICAL:** Removed hardcoded credentials from `docker-compose.yml` that were accidentally exposed in git history
 - Migrated all sensitive credentials to centralized `.env` file with proper `.gitignore` protection

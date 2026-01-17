@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  - name: NetDevOps Dashboards
+    orgId: 1
+    folder: NetDevOps
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      # Load all JSON dashboards in the mounted path
+      # recursive: true
